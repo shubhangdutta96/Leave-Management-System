@@ -5,7 +5,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # Copy the built jar into the container
-COPY target/*.jar app.jar
+COPY target/*.jar leave-management-0.0.1-SNAPSHOT.jar
 
 # Expose the default Spring Boot port
 EXPOSE 8080

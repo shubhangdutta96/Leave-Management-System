@@ -234,6 +234,7 @@ Content-Type: application/json
 ---
 
 ## Support & Deployment
-- Deployable on AWS EC2 or Heroku
-- Health check: `/api/actuator/health`
+- Deployed on Render.com
+- Health check: [https://leave-management-system-0qq1.onrender.com/leaves/healthCheck](https://leave-management-system-0qq1.onrender.com/leaves/healthCheck)
+
 

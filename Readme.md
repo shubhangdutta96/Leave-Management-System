@@ -25,6 +25,11 @@ A comprehensive Spring Boot-based REST API for managing employee leave requests 
 - PostgreSQL 12+ (H2 for development)
 - Git
 - Postman (optional)
+- Docker & Docker Compose
+- docker-compose up --build
+- Once running:
+    - API will be available at: http://localhost:8080/
+     - PostgreSQL will be available at: localhost:5433
 
 ### **Local Development Setup**
 ``` bash

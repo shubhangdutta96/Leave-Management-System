@@ -171,7 +171,7 @@ reason TEXT
 | **PUT**     | `/leaves/{id}/approve`     | Approve leave               | 
 | **PUT**     | `/leaves/{id}/reject`      | Reject leave                |
 | **GET**     | `/employees/{id}/leaves`   | Get employee's leaves       | 
-| **GET**     | `/analytics/leaves`        | Leave analytics             | 
+| **GET**     | `/leaves/healthCheck`      | Service Healthcheck         | 
 
 ---
 

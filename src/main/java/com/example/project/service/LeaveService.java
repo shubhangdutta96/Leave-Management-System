@@ -10,8 +10,8 @@ import com.example.project.repository.LeaveRequestRepository;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +25,28 @@ public class LeaveService {
     public LeaveService(LeaveRequestRepository leaveRepository, EmployeeService employeeService) {
         this.leaveRepository = leaveRepository;
         this.employeeService = employeeService;
+    }
+
+    public List<LeaveResponse> listAllLeaves() {
+         List<LeaveRequest> listOfEmployees = leaveRepository.findAll();
+         List<LeaveResponse> listOfEmployeesWithLeaves = new ArrayList<>();
+         for (LeaveRequest employee : listOfEmployees) {
+             LeaveStatus status = employee.getStatus();
+             if (status == LeaveStatus.PENDING || status == LeaveStatus.APPROVED || status == LeaveStatus.REJECTED) {
+                 LeaveResponse lr = new LeaveResponse(
+                            employee.getId(),
+                            employee.getEmployee().getId(),
+                            employee.getStartDate(),
+                            employee.getEndDate(),
+                            employee.getDays(),
+                            employee.getStatus(),
+                            employee.getReason()
+                    );
+                 listOfEmployeesWithLeaves.add(lr);
+             }
+         }
+
+         return listOfEmployeesWithLeaves;
     }
 
     public LeaveResponse applyLeave(@Valid ApplyLeaveRequest req) {

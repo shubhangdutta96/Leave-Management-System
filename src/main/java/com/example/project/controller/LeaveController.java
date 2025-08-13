@@ -37,6 +37,11 @@ public class LeaveController {
         return ResponseEntity.ok(leaveService.rejectLeave(id));
     }
 
+    @GetMapping
+    public ResponseEntity<List<LeaveResponse>> listAllLeaves() {
+        return ResponseEntity.ok(leaveService.listAllLeaves());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<LeaveResponse> getLeaveById(@PathVariable Long id) {
         return ResponseEntity.ok(leaveService.getLeaveById(id));

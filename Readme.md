@@ -165,9 +165,9 @@ reason TEXT
 | **GET**     | `/employees`                    | List all employees    | 
 | **GET**     | `/employees/{id}`               | Get employee by ID    |
 | **PUT**     | `/employees/{id}`               | Update employee       |
-| **POST**    | `/leaves`                       | Apply for leave       |
+| **POST**    | `/apply`                        | Apply for leave       |
 | **GET**     | `/leaves`                       | Get all leaves        | 
-| **GET**     | `/leaves/{id}`                  | Get leave by ID       | 
+| **GET**     | `/{id}`                         | Get leave by ID       | 
 | **PUT**     | `/leaves/{id}/approve`          | Approve leave         | 
 | **PUT**     | `/leaves/{id}/reject`           | Reject leave          |
 | **GET**     | `/employees/{id}/leave-balance` | Get employee's leaves | 

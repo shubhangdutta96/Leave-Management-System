@@ -21,4 +21,10 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     List<LeaveRequest> findAnyOverlapping(@Param("employee") Employee employee,
                                           @Param("startDate") LocalDate startDate,
                                           @Param("endDate") LocalDate endDate);
+    @Query("SELECT lr FROM LeaveRequest lr WHERE lr.employee = :emp AND lr.id <> :excludeId AND " +
+            "((lr.startDate <= :endDate AND lr.endDate >= :startDate))")
+    List<LeaveRequest> findAnyOverlappingExcludingLeave(@Param("emp") Employee emp,
+                                                        @Param("startDate") LocalDate startDate,
+                                                        @Param("endDate") LocalDate endDate,
+                                                        @Param("excludeId") Long excludeId);
 }

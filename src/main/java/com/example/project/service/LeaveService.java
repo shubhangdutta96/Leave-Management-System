@@ -1,5 +1,6 @@
 package com.example.project.service;
 
+import com.example.project.config.JwtAuthenticatedUser;
 import com.example.project.dto.ApplyLeaveRequest;
 import com.example.project.dto.LeaveResponse;
 import com.example.project.entity.Employee;
@@ -8,6 +9,9 @@ import com.example.project.entity.LeaveStatus;
 import com.example.project.exception.ApiException;
 import com.example.project.repository.LeaveRequestRepository;
 import jakarta.validation.Valid;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.temporal.ChronoUnit;
@@ -129,5 +133,76 @@ public class LeaveService {
         return leaveRepository.findByEmployee(emp).stream()
                 .map(lr -> new LeaveResponse(lr.getId(), emp.getId(), lr.getStartDate(), lr.getEndDate(), lr.getDays(), lr.getStatus(), lr.getReason()))
                 .collect(Collectors.toList());
+    }
+
+    public LeaveResponse updateLeave(Long id, @Valid ApplyLeaveRequest req) {
+        LeaveRequest existingLeave = leaveRepository.findById(id)
+                .orElseThrow(() -> new ApiException("Leave not found"));
+
+        // Verify the leave belongs to the employee requesting update (enforce in controller as well)
+        if (!existingLeave.getEmployee().getId().equals(req.getEmployeeId())) {
+            throw new ApiException("Unauthorized to update this leave");
+        }
+
+        // Validate date logic (same as applyLeave)
+        if (req.getEndDate().isBefore(req.getStartDate())) {
+            logger.info("Invalid leave update: end date {} is before start date {}", req.getEndDate(), req.getStartDate());
+            throw new ApiException("End date cannot be before start date");
+        }
+
+        Employee emp = existingLeave.getEmployee();
+
+        if (req.getStartDate().isBefore(emp.getJoiningDate())) {
+            logger.info("Leave update before joining date: start date {} is before employee joining date {}", req.getStartDate(), emp.getJoiningDate());
+            throw new ApiException("Leave cannot be applied before joining date");
+        }
+
+        long updatedDays = ChronoUnit.DAYS.between(req.getStartDate(), req.getEndDate()) + 1;
+
+        // For update, calculate the difference between old days and new days and check leave balance accordingly
+        int currentBalance = emp.getLeaveBalance() + existingLeave.getDays(); // add back existing leave days temporarily
+
+        if (updatedDays > currentBalance) {
+            logger.info("Insufficient leave balance for update: requested {} days, available {}", updatedDays, currentBalance);
+            throw new ApiException("Insufficient leave balance");
+        }
+
+        // Check for overlapping leaves excluding this leave itself
+        if (!leaveRepository.findAnyOverlappingExcludingLeave(emp, req.getStartDate(), req.getEndDate(), id).isEmpty()) {
+            logger.info("Overlapping leave request exists for employee {}: requested {} to {}", emp.getId(), req.getStartDate(), req.getEndDate());
+            throw new ApiException("Overlapping leave request exists");
+        }
+
+        // Update fields
+        existingLeave.setStartDate(req.getStartDate());
+        existingLeave.setEndDate(req.getEndDate());
+        existingLeave.setDays((int) updatedDays);
+        existingLeave.setReason(req.getReason());
+        existingLeave.setStatus(LeaveStatus.PENDING); // optionally reset status to PENDING after update
+
+        LeaveRequest updated = leaveRepository.save(existingLeave);
+        logger.info("Leave request updated: {}", updated.toString());
+
+        return new LeaveResponse(updated.getId(), emp.getId(), updated.getStartDate(), updated.getEndDate(), updated.getDays(), updated.getStatus(), updated.getReason());
+    }
+
+    public void deleteLeave(Long id) {
+        LeaveRequest leave = leaveRepository.findById(id)
+                .orElseThrow(() -> new ApiException("Leave not found"));
+
+        // Optionally restrict deletion only to PENDING leaves
+        if (leave.getStatus() != LeaveStatus.PENDING) {
+            throw new ApiException("Only pending leaves can be deleted");
+        }
+
+        leaveRepository.delete(leave);
+        logger.info("Leave request deleted: {}", leave.toString());
+    }
+    public Long getCurrentEmployeeId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof JwtAuthenticatedUser) {
+            return ((JwtAuthenticatedUser) auth.getPrincipal()).getEmployeeId();
+        }
+        throw new AccessDeniedException("Unauthorized");
     }
 }
